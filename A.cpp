@@ -27,6 +27,11 @@ class Paper
     vector<char> Y; // y
     vector<char> Z; // x+y
     vector<char> W; // x-y+N-1
+    // movesに追加した長方形
+    vector<vector<array<int, 4>>> hist_add;
+    // movesから削除した長方形
+    // 先頭は今回描いた長方形
+    vector<vector<array<int, 4>>> hist_remove;
 public:
     Paper(int N, int M, vector<int> mark)
         : N(N)
@@ -167,6 +172,10 @@ public:
                 lines[3][W[p1]].push_back({p1, p2});
         }
 
+        hist_add.push_back(vector<array<int, 4>>());
+        hist_remove.push_back(vector<array<int, 4>>());
+
+        hist_remove.back().push_back(m);
         moves.erase(m);
 
         // 作れなくなった正方形を削除
@@ -177,7 +186,10 @@ public:
                   canLine((*it)[1], (*it)[2]) &&
                   canLine((*it)[2], (*it)[3]) &&
                   canLine((*it)[3], (*it)[0])))
+            {
+                hist_remove.back().push_back(*it);
                 it = moves.erase(it);
+            }
             else
                 it++;
         }
@@ -210,12 +222,15 @@ public:
                         canLine(p3, p4) &&
                         canLine(p4, p1))
                     {
+                        array<int, 4> m;
                         if (!P[p2] && P[p3] && P[p4])
-                            moves.insert({p2, p3, p4, p1});
+                            m = {p2, p3, p4, p1};
                         if (P[p2] && !P[p3] && P[p4])
-                            moves.insert({p3, p4, p1, p2});
+                            m = {p3, p4, p1, p2};
                         if (P[p2] && P[p3] && !P[p4])
-                            moves.insert({p4, p1, p2, p3});
+                            m = {p4, p1, p2, p3};
+                        hist_add.back().push_back(m);
+                        moves.insert(m);
                     }
                 }
             }
@@ -248,15 +263,50 @@ public:
                             canLine(p3, p4) &&
                             canLine(p4, p1))
                         {
+                            array<int, 4> m;
                             if (!P[p2] && P[p3] && P[p4])
-                                moves.insert({p2, p3, p4, p1});
+                                m = {p2, p3, p4, p1};
                             if (P[p2] && !P[p3] && P[p4])
-                                moves.insert({p3, p4, p1, p2});
+                                m = {p3, p4, p1, p2};
                             if (P[p2] && P[p3] && !P[p4])
-                                moves.insert({p4, p1, p2, p3});
+                                m = {p4, p1, p2, p3};
+                            hist_add.back().push_back(m);
+                            moves.insert(m);
                         }
             }
         }
+    }
+
+    void undo()
+    {
+        array<int, 4> m = hist_remove.back().front();
+
+        for (array<int, 4> &t: hist_add.back())
+            moves.erase(t);
+        for (array<int, 4> &t: hist_remove.back())
+            moves.insert(t);
+
+        hist_add.pop_back();
+        hist_remove.pop_back();
+
+        for (int i=0; i<4; i++)
+        {
+            int p1 = m[i];
+            int p2 = m[(i+1)%4];
+            if (p1>p2)
+                swap(p1, p2);
+
+            if (X[p1]==X[p2])
+                lines[0][X[p1]].pop_back();
+            if (Y[p1]==Y[p2])
+                lines[1][Y[p1]].pop_back();
+            if (Z[p1]==Z[p2])
+                lines[2][Z[p1]].pop_back();
+            if (W[p1]==W[p2])
+                lines[3][W[p1]].pop_back();
+        }
+
+        P[m[0]] = 0;
     }
 
     bool canLine(int p1, int p2) const
@@ -329,16 +379,38 @@ int main()
     Paper paper(N, M, mark);
 
     vector<array<int, 4>> A;
+    bool emergency = false;
     while (true)
     {
         if (chrono::duration_cast<chrono::nanoseconds>(system_clock::now()-start).count()*1e-9>4.0)
-            break;
+            emergency = true;
 
         vector<array<int, 4>> moves = paper.getMoves();
         if (moves.empty())
             break;
 
-        array<int, 4> move = moves[xor64()%int(moves.size())];
+        int mi = -1;
+        if (!emergency)
+        {
+            int ms = -1;
+            for (int i=0; i<(int)moves.size(); i++)
+            {
+                paper.move(moves[i]);
+                //int s = (int)paper.score();
+                int s = (int)paper.getMoves().size();
+                paper.undo();
+
+                if (s>ms)
+                {
+                    ms = s;
+                    mi = i;
+                }
+            }
+        }
+        else
+            mi = xor64()%(int)moves.size();
+
+        array<int, 4> move = moves[mi];
         A.push_back(move);
         paper.move(move);
     }
