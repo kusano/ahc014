@@ -2,6 +2,7 @@
 #include <vector>
 #include <array>
 #include <chrono>
+#include <set>
 using namespace std;
 using namespace std::chrono;
 
@@ -21,7 +22,10 @@ class Paper
     // ｜－＼／
     // l[0]<l[1]
     vector<vector<array<int, 2>>> lines[4];
-    vector<char> X, Y;
+    vector<char> X; // x
+    vector<char> Y; // y
+    vector<char> Z; // x+y
+    vector<char> W; // x-y+N-1
 public:
     Paper(int N, int M, vector<int> mark)
         : N(N)
@@ -39,6 +43,8 @@ public:
         {
             X.push_back(p%N);
             Y.push_back(p/N);
+            Z.push_back(p%N+p/N);
+            W.push_back(p%N-p/N+N-1);
         }
     }
 
@@ -155,10 +161,10 @@ public:
                 lines[0][X[p1]].push_back({p1, p2});
             if (Y[p1]==Y[p2])
                 lines[1][Y[p1]].push_back({p1, p2});
-            if (X[p1]+Y[p1]==X[p2]+Y[p2])
-                lines[2][X[p1]+Y[p1]].push_back({p1, p2});
-            if (X[p1]-Y[p1]==X[p2]-Y[p2])
-                lines[3][X[p1]-Y[p1]+N-1].push_back({p1, p2});
+            if (Z[p1]==Z[p2])
+                lines[2][Z[p1]].push_back({p1, p2});
+            if (W[p1]==W[p2])
+                lines[3][W[p1]].push_back({p1, p2});
         }
     }
 
@@ -172,42 +178,42 @@ public:
         int x2 = X[p2];
         int y2 = Y[p2];
 
-        if (x1==x2)
+        if (X[p1]==X[p2])
         {
             for (int p=p1+N; p<p2; p+=N)
                 if (P[p])
                     return false;
-            for (array<int, 2> l: lines[0][x1])
+            for (array<int, 2> l: lines[0][X[p1]])
                 if (p1<l[1] && l[0]<p2)
                     return false;
         }
 
-        if (y1==y2)
+        if (Y[p1]==Y[p2])
         {
             for (int p=p1+1; p<p2; p++)
                 if (P[p])
                     return false;
-            for (array<int, 2> l: lines[1][y1])
+            for (array<int, 2> l: lines[1][Y[p1]])
                 if (p1<l[1] && l[0]<p2)
                     return false;
         }
 
-        if (x1+y1==x2+y2)
+        if (Z[p1]==Z[p2])
         {
             for (int p=p1+N-1; p<p2; p+=N-1)
                 if (P[p])
                     return false;
-            for (array<int, 2> l: lines[2][x1+y1])
+            for (array<int, 2> l: lines[2][Z[p1]])
                 if (p1<l[1] && l[0]<p2)
                     return false;
         }
 
-        if (x1-y1==x2-y2)
+        if (W[p1]==W[p2])
         {
             for (int p=p1+N+1; p<p2; p+=N+1)
                 if (P[p])
                     return false;
-            for (array<int, 2> l: lines[3][x1-y1+N-1])
+            for (array<int, 2> l: lines[3][W[p1]])
                 if (p1<l[1] && l[0]<p2)
                     return false;
         }
