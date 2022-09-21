@@ -22,6 +22,7 @@ class Paper
     // ｜－＼／
     // l[0]<l[1]
     vector<vector<array<int, 2>>> lines[4];
+    set<array<int, 4>> moves;
     vector<char> X; // x
     vector<char> Y; // y
     vector<char> Z; // x+y
@@ -46,28 +47,6 @@ public:
             Z.push_back(p%N+p/N);
             W.push_back(p%N-p/N+N-1);
         }
-    }
-
-    long long score() const
-    {
-        long long S = 0;
-        long long s = 0;
-        int c = (N-1)/2;
-        for (int p=0; p<N*N; p++)
-        {
-            int x = X[p];
-            int y = Y[p];
-            long long t = (x-c)*(x-c)+(y-c)*(y-c)+1;
-            S += t;
-            if (P[p])
-                s += t;
-        }
-        return 1'000'000LL*N*N*s/(M*S);
-    }
-
-    vector<array<int, 4>> getMoves() const
-    {
-        vector<array<int, 4>> moves;
 
         for (int p1=0; p1<N*N; p1++)
             if (!P[p1])
@@ -98,7 +77,7 @@ public:
                                     canLine(p3, p4) &&
                                     canLine(p4, p1))
                                 {
-                                    moves.push_back({p1, p2, p3, p4});
+                                    moves.insert({p1, p2, p3, p4});
                                 }
                             }
                         }
@@ -138,13 +117,34 @@ public:
                                     canLine(p3, p4) &&
                                     canLine(p4, p1))
                                 {
-                                    moves.push_back({p1, p2, p3, p4});
+                                    moves.insert({p1, p2, p3, p4});
                                 }
                             }
                         }
                     }
             }
-        return moves;
+    }
+
+    long long score() const
+    {
+        long long S = 0;
+        long long s = 0;
+        int c = (N-1)/2;
+        for (int p=0; p<N*N; p++)
+        {
+            int x = X[p];
+            int y = Y[p];
+            long long t = (x-c)*(x-c)+(y-c)*(y-c)+1;
+            S += t;
+            if (P[p])
+                s += t;
+        }
+        return 1'000'000LL*N*N*s/(M*S);
+    }
+
+    vector<array<int, 4>> getMoves() const
+    {
+        return vector<array<int, 4>>(moves.begin(), moves.end());
     }
 
     void move(array<int, 4> m)
@@ -165,6 +165,97 @@ public:
                 lines[2][Z[p1]].push_back({p1, p2});
             if (W[p1]==W[p2])
                 lines[3][W[p1]].push_back({p1, p2});
+        }
+
+        moves.erase(m);
+
+        // 作れなくなった正方形を削除
+        for (auto it=moves.begin(); it!=moves.end(); )
+        {
+            if ((*it)[0]==m[0] ||
+                !(canLine((*it)[0], (*it)[1]) &&
+                  canLine((*it)[1], (*it)[2]) &&
+                  canLine((*it)[2], (*it)[3]) &&
+                  canLine((*it)[3], (*it)[0])))
+                it = moves.erase(it);
+            else
+                it++;
+        }
+
+        // 作れるようになった長方形を追加
+        int p1 = m[0];
+        int x1 = X[p1];
+        int y1 = Y[p1];
+        for (int p3=0; p3<N*N; p3++)
+        {
+            int x3 = X[p3];
+            int y3 = Y[p3];
+
+            if (x3!=x1 && y3!=y1)
+            {
+                int x2 = x1;
+                int y2 = y3;
+                int p2 = y2*N+x2;
+
+                int x4 = x3;
+                int y4 = y1;
+                int p4 = y4*N+x4;
+
+                if (!P[p2] && P[p3] && P[p4] ||
+                    P[p2] && !P[p3] && P[p4] ||
+                    P[p2] && P[p3] && !P[p4])
+                {
+                    if (canLine(p1, p2) &&
+                        canLine(p2, p3) &&
+                        canLine(p3, p4) &&
+                        canLine(p4, p1))
+                    {
+                        if (!P[p2] && P[p3] && P[p4])
+                            moves.insert({p2, p3, p4, p1});
+                        if (P[p2] && !P[p3] && P[p4])
+                            moves.insert({p3, p4, p1, p2});
+                        if (P[p2] && P[p3] && !P[p4])
+                            moves.insert({p4, p1, p2, p3});
+                    }
+                }
+            }
+        }
+
+        for (int p3=0; p3<N*N; p3++)
+        {
+            int x3 = X[p3];
+            int y3 = Y[p3];
+
+            if ((x1+y1)%2==(x3+y3)%2 &&
+                x1-x3!=y1-y3 &&
+                x1-x3!=y3-y1)
+            {
+                int x2 = (x1+x3+y1-y3)/2;
+                int y2 = (x1-x3+y1+y3)/2;
+                int p2 = y2*N+x2;
+
+                int x4 = (x1+x3-y1+y3)/2;
+                int y4 = (-x1+x3+y1+y3)/2;
+                int p4 = y4*N+x4;
+
+                if (0<=x2 && x2<N && 0<=y2 && y2<N &&
+                    0<=x4 && x4<N && 0<=y4 && y4<N)
+                    if (!P[p2] && P[p3] && P[p4] ||
+                        P[p2] && !P[p3] && P[p4] ||
+                        P[p2] && P[p3] && !P[p4])
+                        if (canLine(p1, p2) &&
+                            canLine(p2, p3) &&
+                            canLine(p3, p4) &&
+                            canLine(p4, p1))
+                        {
+                            if (!P[p2] && P[p3] && P[p4])
+                                moves.insert({p2, p3, p4, p1});
+                            if (P[p2] && !P[p3] && P[p4])
+                                moves.insert({p3, p4, p1, p2});
+                            if (P[p2] && P[p3] && !P[p4])
+                                moves.insert({p4, p1, p2, p3});
+                        }
+            }
         }
     }
 
