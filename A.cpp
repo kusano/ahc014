@@ -397,21 +397,61 @@ int main()
                 break;
 
             int mi = -1;
-            for (int i=0; i<(int)moves.size(); i++)
+            for (int i=0; i<(int)moves.size() && mi==-1; i++)
             {
                 array<int, 4> m = moves[i];
                 sort(m.begin(), m.end());
                 if (m[1]==m[0]+N-1 &&
                     m[2]==m[0]+N+1 &&
-                    m[3]==m[0]+2*N &&
-                    (pattern%2==0?paper.X[m[0]]:paper.Y[m[0]])%2==pattern/2%2 ||
-                    m[1]==m[0]+1 &&
-                    m[2]==m[0]+N &&
-                    m[3]==m[0]+N+1 &&
-                    paper.Z[m[0]]%2==pattern/4%2)
+                    m[3]==m[0]+2*N)
                 {
-                    mi = i;
-                    break;
+                    int c = (m[0]+m[1]+m[2]+m[3])/4;
+                    int dx = paper.X[c]-(N-1)/2;
+                    int dy = paper.Y[c]-(N-1)/2;
+                    if (abs(dx)<=abs(dy))
+                    {
+                        if (paper.X[c]%2==pattern%2)
+                            mi = i;
+                    }
+                    if (abs(dx)>=abs(dy))
+                    {
+                        if (paper.Y[c]%2==pattern/2%2)
+                            mi = i;
+                    }
+                }
+                if (m[1]==m[0]+1 &&
+                    m[2]==m[0]+N &&
+                    m[3]==m[0]+N+1)
+                {
+                    if (paper.Z[m[0]]%2==pattern/4%2)
+                        mi = i;
+                }
+            }
+
+            if (mi==-1)
+            {
+                for (int i=0; i<(int)moves.size() && mi==-1; i++)
+                {
+                    array<int, 4> m = moves[i];
+                    sort(m.begin(), m.end());
+                    if (m[1]==m[0]+N-1 &&
+                        m[2]==m[0]+N+1 &&
+                        m[3]==m[0]+2*N)
+                    {
+                        int c = (m[0]+m[1]+m[2]+m[3])/4;
+                        int dx = paper.X[c]-(N-1)/2;
+                        int dy = paper.Y[c]-(N-1)/2;
+                        if (abs(dx)>abs(dy))
+                        {
+                            if (paper.X[c]%2==pattern%2)
+                                mi = i;
+                        }
+                        if (abs(dx)<abs(dy))
+                        {
+                            if (paper.Y[c]%2==pattern/2%2)
+                                mi = i;
+                        }
+                    }
                 }
             }
 
