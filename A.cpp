@@ -431,6 +431,7 @@ int main()
             if (mi==-1)
             {
                 int maxn = 0;
+                vector<int> cand;
 
                 for (int i=0; i<(int)moves.size(); i++)
                 {
@@ -486,14 +487,21 @@ int main()
                     if (n>maxn)
                     {
                         maxn = n;
-                        mi = i;
+                        cand.clear();
                     }
+                    if (n>0 && n==maxn)
+                        cand.push_back(i);
                 }
+
+                if (!cand.empty())
+                    mi = cand[xor64()%(int)cand.size()];
             }
 
             if (mi==-1)
             {
                 int ms = -1;
+                vector<int> cand;
+
                 for (int i=0; i<(int)moves.size(); i++)
                 {
                     paper.move(moves[i]);
@@ -504,9 +512,14 @@ int main()
                     if (s>ms)
                     {
                         ms = s;
-                        mi = i;
+                        cand.clear();
                     }
+                    if (s==ms)
+                        cand.push_back(i);
                 }
+
+                if (!cand.empty())
+                    mi = cand[xor64()%(int)cand.size()];
             }
 
             array<int, 4> move = moves[mi];
