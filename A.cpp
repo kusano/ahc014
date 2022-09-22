@@ -457,7 +457,7 @@ int main()
 
             if (mi==-1)
             {
-                int maxn = -1;
+                int maxn = 0;
 
                 for (int i=0; i<(int)moves.size(); i++)
                 {
