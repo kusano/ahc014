@@ -3,6 +3,7 @@
 #include <array>
 #include <chrono>
 #include <set>
+#include <algorithm>
 using namespace std;
 using namespace std::chrono;
 
@@ -16,6 +17,7 @@ int xor64() {
 
 class Paper
 {
+public:
     int N;
     int M;
     vector<char> P;
@@ -32,7 +34,7 @@ class Paper
     // movesから削除した長方形
     // 先頭は今回描いた長方形
     vector<vector<array<int, 4>>> hist_remove;
-public:
+
     Paper(int N, int M, vector<int> mark)
         : N(N)
         , M(M)
@@ -378,56 +380,84 @@ int main()
 
     Paper paper(N, M, mark);
 
-    vector<array<int, 4>> A;
-    bool emergency = false;
-    while (true)
+    vector<array<int, 4>> bestA;
+    long long bestScore = 0;
+
+    for (int pattern=0; pattern<8; pattern++)
     {
-        if (chrono::duration_cast<chrono::nanoseconds>(system_clock::now()-start).count()*1e-9>4.0)
-            emergency = true;
+        vector<array<int, 4>> A;
 
-        vector<array<int, 4>> moves = paper.getMoves();
-        if (moves.empty())
-            break;
-
-        int mi = -1;
-        if (!emergency)
+        while (true)
         {
-            int ms = -1;
+            if (chrono::duration_cast<chrono::nanoseconds>(system_clock::now()-start).count()*1e-9>4.8)
+                break;
+
+            vector<array<int, 4>> moves = paper.getMoves();
+            if (moves.empty())
+                break;
+
+            int mi = -1;
             for (int i=0; i<(int)moves.size(); i++)
             {
-                paper.move(moves[i]);
-                //int s = (int)paper.score();
-                int s = (int)paper.getMoves().size();
-                paper.undo();
-
-                if (s>ms)
+                array<int, 4> m = moves[i];
+                sort(m.begin(), m.end());
+                if (m[1]==m[0]+N-1 &&
+                    m[2]==m[0]+N+1 &&
+                    m[3]==m[0]+2*N &&
+                    (pattern%2==0?paper.X[m[0]]:paper.X[m[0]])%2==pattern/2%2 ||
+                    m[1]==m[0]+1 &&
+                    m[2]==m[0]+N &&
+                    m[3]==m[0]+N+1 &&
+                    paper.Z[m[0]]%2==pattern/4%2)
                 {
-                    ms = s;
                     mi = i;
+                    break;
                 }
             }
-        }
-        else
-            mi = xor64()%(int)moves.size();
 
-        array<int, 4> move = moves[mi];
-        A.push_back(move);
-        paper.move(move);
+            if (mi==-1)
+            {
+                int ms = -1;
+                for (int i=0; i<(int)moves.size(); i++)
+                {
+                    paper.move(moves[i]);
+                    //int s = (int)paper.score();
+                    int s = (int)paper.getMoves().size();
+                    paper.undo();
+
+                    if (s>ms)
+                    {
+                        ms = s;
+                        mi = i;
+                    }
+                }
+            }
+
+            array<int, 4> move = moves[mi];
+            A.push_back(move);
+            paper.move(move);
+        }
+
+        if (paper.score()>bestScore)
+        {
+            bestScore = paper.score();
+            bestA = A;
+        }
+
+        while (!paper.hist_add.empty())
+            paper.undo();
     }
 
-    cout<<A.size()<<endl;
-    for (array<int, 4> a: A)
+    cout<<bestA.size()<<endl;
+    for (array<int, 4> a: bestA)
     {
         for (int i=0; i<4; i++)
             cout<<(i==0?"":" ")<<a[i]%N<<" "<<a[i]/N;
         cout<<endl;
     }
 
-    cerr<<"N: "<<N<<endl;
-    cerr<<"M: "<<M<<endl;
-    cerr<<"num: "<<A.size()<<endl;
-    cerr<<"Score: "<<paper.score()<<endl;
-    cerr<<"Time: "<<chrono::duration_cast<chrono::nanoseconds>(system_clock::now()-start).count()*1e-9<<endl;
+    double time = chrono::duration_cast<chrono::nanoseconds>(system_clock::now()-start).count()*1e-9;
+    cerr<<N<<" "<<M<<" "<<bestA.size()<<" "<<bestScore<<" "<<time<<endl;
 
     return 0;
 }
