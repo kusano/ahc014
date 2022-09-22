@@ -499,14 +499,13 @@ int main()
 
             if (mi==-1)
             {
-                int ms = -1;
+                long long ms = -1;
                 vector<int> cand;
 
                 for (int i=0; i<(int)moves.size(); i++)
                 {
                     paper.move(moves[i]);
-                    //int s = (int)paper.score();
-                    int s = (int)paper.getMoves().size();
+                    long long s = (long long)paper.getMoves().size()*1000000000 + paper.score();
                     paper.undo();
 
                     if (s>ms)
