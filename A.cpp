@@ -404,7 +404,7 @@ int main()
                 if (m[1]==m[0]+N-1 &&
                     m[2]==m[0]+N+1 &&
                     m[3]==m[0]+2*N &&
-                    (pattern%2==0?paper.X[m[0]]:paper.X[m[0]])%2==pattern/2%2 ||
+                    (pattern%2==0?paper.X[m[0]]:paper.Y[m[0]])%2==pattern/2%2 ||
                     m[1]==m[0]+1 &&
                     m[2]==m[0]+N &&
                     m[3]==m[0]+N+1 &&
