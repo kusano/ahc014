@@ -383,8 +383,11 @@ int main()
     vector<array<int, 4>> bestA;
     long long bestScore = 0;
 
-    for (int pattern=0; pattern<8; pattern++)
+    for (int pattern=0; ; pattern++)
     {
+        if (chrono::duration_cast<chrono::nanoseconds>(system_clock::now()-start).count()*1e-9>4.8)
+            break;
+
         vector<array<int, 4>> A;
 
         while (true)
@@ -505,7 +508,8 @@ int main()
                 for (int i=0; i<(int)moves.size(); i++)
                 {
                     paper.move(moves[i]);
-                    long long s = (long long)paper.getMoves().size()*1000000000 + paper.score();
+                    //long long s = (long long)paper.getMoves().size()*1000000000 + paper.score();
+                    long long s = (long long)paper.getMoves().size();
                     paper.undo();
 
                     if (s>ms)
