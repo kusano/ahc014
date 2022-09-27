@@ -4,6 +4,7 @@
 #include <chrono>
 #include <set>
 #include <algorithm>
+#include <cstdio>
 using namespace std;
 using namespace std::chrono;
 
@@ -385,6 +386,61 @@ int main()
 
     for (int pattern=0; pattern<8; pattern++)
     {
+        auto isPattern = [&](array<int, 4> m) -> bool
+        {
+            sort(m.begin(), m.end());
+            if (m[1]==m[0]+N-1 &&
+                m[2]==m[0]+N+1 &&
+                m[3]==m[0]+2*N)
+            {
+                int c = (m[0]+m[1]+m[2]+m[3])/4;
+                int dx = paper.X[c]-(N-1)/2;
+                int dy = paper.Y[c]-(N-1)/2;
+                if (abs(dx)<=abs(dy))
+                {
+                    if (paper.X[c]%2==pattern%2)
+                        return true;
+                }
+                if (abs(dx)>=abs(dy))
+                {
+                    if (paper.Y[c]%2==pattern/2%2)
+                        return true;
+                }
+            }
+            if (m[1]==m[0]+1 &&
+                m[2]==m[0]+N &&
+                m[3]==m[0]+N+1)
+            {
+                if (paper.Z[m[0]]%2==pattern/4%2)
+                    return true;
+            }
+            return false;
+        };
+
+        auto getPatternLength = [&]() -> int
+        {
+            int n = 0;
+            while (true)
+            {
+                array<int, 4> mm = {-1, 0, 0, 0};
+
+                for (array<int, 4> m: paper.getMoves())
+                {
+                    if (mm[0]!=-1)
+                        break;
+                    if (isPattern(m))
+                        mm = m;
+                }
+                if (mm[0]==-1)
+                    break;
+                paper.move(mm);
+                n++;
+            }
+            for (int i=0; i<n; i++)
+                paper.undo();
+            return n;
+        };
+
         vector<array<int, 4>> A;
 
         while (true)
@@ -398,35 +454,8 @@ int main()
 
             int mi = -1;
             for (int i=0; i<(int)moves.size() && mi==-1; i++)
-            {
-                array<int, 4> m = moves[i];
-                sort(m.begin(), m.end());
-                if (m[1]==m[0]+N-1 &&
-                    m[2]==m[0]+N+1 &&
-                    m[3]==m[0]+2*N)
-                {
-                    int c = (m[0]+m[1]+m[2]+m[3])/4;
-                    int dx = paper.X[c]-(N-1)/2;
-                    int dy = paper.Y[c]-(N-1)/2;
-                    if (abs(dx)<=abs(dy))
-                    {
-                        if (paper.X[c]%2==pattern%2)
-                            mi = i;
-                    }
-                    if (abs(dx)>=abs(dy))
-                    {
-                        if (paper.Y[c]%2==pattern/2%2)
-                            mi = i;
-                    }
-                }
-                if (m[1]==m[0]+1 &&
-                    m[2]==m[0]+N &&
-                    m[3]==m[0]+N+1)
-                {
-                    if (paper.Z[m[0]]%2==pattern/4%2)
-                        mi = i;
-                }
-            }
+                if (isPattern(moves[i]))
+                    mi = i;
 
             if (mi==-1)
             {
@@ -436,52 +465,7 @@ int main()
                 for (int i=0; i<(int)moves.size(); i++)
                 {
                     paper.move(moves[i]);
-
-                    int n = 0;
-                    while (true)
-                    {
-                        array<int, 4> mm = {-1, 0, 0, 0};
-
-                        for (array<int, 4> m: paper.getMoves())
-                        {
-                            if (mm[0]!=-1)
-                                break;
-
-                            array<int, 4> morg = m;
-                            sort(m.begin(), m.end());
-                            if (m[1]==m[0]+N-1 &&
-                                m[2]==m[0]+N+1 &&
-                                m[3]==m[0]+2*N)
-                            {
-                                int c = (m[0]+m[1]+m[2]+m[3])/4;
-                                int dx = paper.X[c]-(N-1)/2;
-                                int dy = paper.Y[c]-(N-1)/2;
-                                if (abs(dx)<=abs(dy))
-                                {
-                                    if (paper.X[c]%2==pattern%2)
-                                        mm = morg;
-                                }
-                                if (abs(dx)>=abs(dy))
-                                {
-                                    if (paper.Y[c]%2==pattern/2%2)
-                                        mm = morg;
-                                }
-                            }
-                            if (m[1]==m[0]+1 &&
-                                m[2]==m[0]+N &&
-                                m[3]==m[0]+N+1)
-                            {
-                                if (paper.Z[m[0]]%2==pattern/4%2)
-                                    mm = morg;
-                            }
-                        }
-                        if (mm[0]==-1)
-                            break;
-                        paper.move(mm);
-                        n++;
-                    }
-                    for (int i=0; i<n; i++)
-                        paper.undo();
+                    int n = getPatternLength();
                     paper.undo();
 
                     if (n>maxn)
@@ -545,7 +529,7 @@ int main()
     }
 
     double time = chrono::duration_cast<chrono::nanoseconds>(system_clock::now()-start).count()*1e-9;
-    cerr<<N<<" "<<M<<" "<<bestA.size()<<" "<<bestScore<<" "<<time<<endl;
+    fprintf(stderr, "%2d %3d %4d %7d %6.3f\n", N, M, (int)bestA.size(), (int)bestScore, time);
 
     return 0;
 }
