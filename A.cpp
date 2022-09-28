@@ -384,8 +384,13 @@ int main()
     vector<array<int, 4>> bestA;
     long long bestScore = 0;
 
-    for (int pattern=0; pattern<8; pattern++)
+    const double TIME = 4.8;
+
+    for (int pattern=0; pattern<16; pattern++)
     {
+        if (chrono::duration_cast<chrono::nanoseconds>(system_clock::now()-start).count()*1e-9>TIME)
+            break;
+
         auto isPattern = [&](array<int, 4> m) -> bool
         {
             sort(m.begin(), m.end());
@@ -445,7 +450,7 @@ int main()
 
         while (true)
         {
-            if (chrono::duration_cast<chrono::nanoseconds>(system_clock::now()-start).count()*1e-9>4.8)
+            if (chrono::duration_cast<chrono::nanoseconds>(system_clock::now()-start).count()*1e-9>TIME)
                 break;
 
             vector<array<int, 4>> moves = paper.getMoves();
