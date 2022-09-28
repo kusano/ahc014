@@ -496,7 +496,7 @@ int main()
                     paper.move(moves[i]);
                     long long s = (long long)paper.getMoves().size()*1000000000;
                     // 2周目以降はscoreの評価を止めてランダム性を出す。
-                    if (pattern>=8)
+                    if (pattern<8)
                         s += paper.score();
                     paper.undo();
 
@@ -512,6 +512,9 @@ int main()
                 if (!cand.empty())
                     mi = cand[xor64()%(int)cand.size()];
             }
+
+            if (mi==-1)
+                mi = xor64()%(int)moves.size();
 
             array<int, 4> move = moves[mi];
             A.push_back(move);
