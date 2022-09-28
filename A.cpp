@@ -386,7 +386,7 @@ int main()
 
     const double TIME = 4.8;
 
-    for (int pattern=0; pattern<16; pattern++)
+    for (int pattern=0; ; pattern++)
     {
         if (chrono::duration_cast<chrono::nanoseconds>(system_clock::now()-start).count()*1e-9>TIME)
             break;
@@ -494,7 +494,10 @@ int main()
                 for (int i=0; i<(int)moves.size(); i++)
                 {
                     paper.move(moves[i]);
-                    long long s = (long long)paper.getMoves().size()*1000000000 + paper.score();
+                    long long s = (long long)paper.getMoves().size()*1000000000;
+                    // 2周目以降はscoreの評価を止めてランダム性を出す。
+                    if (pattern>=8)
+                        s += paper.score();
                     paper.undo();
 
                     if (s>ms)
