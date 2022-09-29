@@ -391,6 +391,13 @@ int main()
         if (chrono::duration_cast<chrono::nanoseconds>(system_clock::now()-start).count()*1e-9>TIME)
             break;
 
+
+        int p0 = pattern>>0&1;
+        int p1 = pattern>>1&1;
+        int p2 = pattern>>2&1;
+        int p3 = pattern>>3&1;
+        int p4 = pattern>>4&1;
+
         auto isPattern = [&](array<int, 4> m) -> bool
         {
             sort(m.begin(), m.end());
@@ -401,22 +408,20 @@ int main()
                 int c = (m[0]+m[1]+m[2]+m[3])/4;
                 int dx = paper.X[c]-(N-1)/2;
                 int dy = paper.Y[c]-(N-1)/2;
-                if (abs(dx)<=abs(dy))
-                {
-                    if (paper.X[c]%2==pattern%2)
-                        return true;
-                }
-                if (abs(dx)>=abs(dy))
-                {
-                    if (paper.Y[c]%2==pattern/2%2)
-                        return true;
-                }
+                if (abs(dx)<=abs(dy) && dy<=0 && paper.X[c]%2==(p0^p1))
+                    return true;
+                if (abs(dx)<=abs(dy) && dy>=0 && paper.X[c]%2==(p0^p1^p3))
+                    return true;
+                if (abs(dx)>=abs(dy) && dx<=0 && paper.Y[c]%2==(p0^p1^p2))
+                    return true;
+                if (abs(dx)>=abs(dy) && dx>=0 && paper.Y[c]%2==(p0^p1^p2^p4))
+                    return true;
             }
             if (m[1]==m[0]+1 &&
                 m[2]==m[0]+N &&
                 m[3]==m[0]+N+1)
             {
-                if (paper.Z[m[0]]%2==pattern/4%2)
+                if (paper.Z[m[0]]%2==p0)
                     return true;
             }
             return false;
@@ -496,7 +501,7 @@ int main()
                     paper.move(moves[i]);
                     long long s = (long long)paper.getMoves().size()*1000000000;
                     // 2周目以降はscoreの評価を止めてランダム性を出す。
-                    if (pattern<8)
+                    if (pattern<32)
                         s += paper.score();
                     paper.undo();
 
