@@ -30,11 +30,15 @@ public:
     vector<char> Y; // y
     vector<char> Z; // x+y
     vector<char> W; // x-y+N-1
+    vector<int> S; // (x-c)^2+(y-c)^2+1
     // movesに追加した長方形
     vector<vector<array<int, 4>>> hist_add;
     // movesから削除した長方形
     // 先頭は今回描いた長方形
     vector<vector<array<int, 4>>> hist_remove;
+
+    long long score_S;
+    long long score_s;
 
     Paper(int N, int M, vector<int> mark)
         : N(N)
@@ -48,12 +52,14 @@ public:
         lines[2].resize(2*N-1);
         lines[3].resize(2*N-1);
 
+        int c = (N-1)/2;
         for (int p=0; p<N*N; p++)
         {
             X.push_back(p%N);
             Y.push_back(p/N);
             Z.push_back(p%N+p/N);
             W.push_back(p%N-p/N+N-1);
+            S.push_back((X[p]-c)*(X[p]-c)+(Y[p]-c)*(Y[p]-c)+1);
         }
 
         for (int p1=0; p1<N*N; p1++)
@@ -131,23 +137,20 @@ public:
                         }
                     }
             }
+
+        score_S = 0;
+        score_s = 0;
+        for (int p=0; p<N*N; p++)
+        {
+            score_S += S[p];
+            if (P[p])
+                score_s += S[p];
+        }
     }
 
     long long score() const
     {
-        long long S = 0;
-        long long s = 0;
-        int c = (N-1)/2;
-        for (int p=0; p<N*N; p++)
-        {
-            int x = X[p];
-            int y = Y[p];
-            long long t = (x-c)*(x-c)+(y-c)*(y-c)+1;
-            S += t;
-            if (P[p])
-                s += t;
-        }
-        return 1'000'000LL*N*N*s/(M*S);
+        return 1'000'000LL*N*N*score_s/(M*score_S);
     }
 
     vector<array<int, 4>> getMoves() const
@@ -158,6 +161,8 @@ public:
     void move(array<int, 4> m)
     {
         P[m[0]] = 1;
+        score_s += S[m[0]];
+
         for (int i=0; i<4; i++)
         {
             int p1 = m[i];
@@ -309,6 +314,7 @@ public:
                 lines[3][W[p1]].pop_back();
         }
 
+        score_s -= S[m[0]];
         P[m[0]] = 0;
     }
 
@@ -392,7 +398,6 @@ int main()
     {
         if (chrono::duration_cast<chrono::nanoseconds>(system_clock::now()-start).count()*1e-9>TIME)
             break;
-
 
         int p0 = pattern>>0&1;
         int p1 = pattern>>1&1;
