@@ -383,10 +383,12 @@ int main()
 
     vector<array<int, 4>> bestA;
     long long bestScore = 0;
+    int bestPattern = -1;
 
     const double TIME = 4.8;
 
-    for (int pattern=0; ; pattern++)
+    int pattern;
+    for (pattern=0; ; pattern++)
     {
         if (chrono::duration_cast<chrono::nanoseconds>(system_clock::now()-start).count()*1e-9>TIME)
             break;
@@ -530,6 +532,7 @@ int main()
         {
             bestScore = paper.score();
             bestA = A;
+            bestPattern = pattern;
         }
 
         while (!paper.hist_add.empty())
@@ -545,7 +548,7 @@ int main()
     }
 
     double time = chrono::duration_cast<chrono::nanoseconds>(system_clock::now()-start).count()*1e-9;
-    fprintf(stderr, "%2d %3d %4d %7d %6.3f\n", N, M, (int)bestA.size(), (int)bestScore, time);
+    fprintf(stderr, "%2d %3d %4d %7d %6.3f %04x %4d\n", N, M, (int)bestA.size(), (int)bestScore, time, bestPattern, pattern);
 
     return 0;
 }
